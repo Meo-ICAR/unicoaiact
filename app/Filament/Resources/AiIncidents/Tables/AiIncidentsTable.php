@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AiIncidents\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -20,6 +21,13 @@ class AiIncidentsTable
                     ->searchable(),
                 TextColumn::make('severity')
                     ->badge(),
+                IconColumn::make('reported_to_authority')
+                    ->boolean(),
+                TextColumn::make('authority_notified_at')
+                    ->dateTime()
+                    ->sortable(),
+                TextColumn::make('authority_reference_code')
+                    ->searchable(),
                 TextColumn::make('reported_at')
                     ->dateTime()
                     ->sortable(),

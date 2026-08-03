@@ -6,26 +6,30 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class FrameworkRequirement extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $guarded = [];
 
-    protected function casts(): array
+    protected $casts = [
+        'applicable_risk_levels' => 'array',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'applicable_risk_levels' => 'array',
-        ];
+        return LogOptions::defaults()->logAll()->logOnlyDirty();
     }
 
-    public function framework(): BelongsTo
+    public function complianceFramework(): BelongsTo
     {
-        return $this->belongsTo(ComplianceFramework::class, 'compliance_framework_id');
+        return $this->belongsTo(ComplianceFramework::class);
     }
 
-    public function answers(): HasMany
+    public function auditAnswers(): HasMany
     {
         return $this->hasMany(AuditAnswer::class);
     }

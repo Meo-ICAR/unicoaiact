@@ -14,19 +14,14 @@ class RiskAssessment extends Model
 
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'is_annex_iii' => 'boolean',
-            'completed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'is_annex_iii' => 'boolean',
+        'completed_at' => 'datetime',
+    ];
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty();
+        return LogOptions::defaults()->logAll()->logOnlyDirty();
     }
 
     public function aiSystem(): BelongsTo
@@ -37,5 +32,10 @@ class RiskAssessment extends Model
     public function evaluator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'evaluated_by');
+    }
+
+    public function pqcSignatures()
+    {
+        return $this->morphMany(PqcSignature::class, 'signable');
     }
 }

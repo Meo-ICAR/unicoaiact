@@ -16,24 +16,19 @@ class AuditAnswer extends Model implements HasMedia
 
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'is_compliant' => 'boolean',
-            'payload' => 'array',
-        ];
-    }
+    protected $casts = [
+        'is_compliant' => 'boolean',
+        'payload' => 'array',
+    ];
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty();
+        return LogOptions::defaults()->logAll()->logOnlyDirty();
     }
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('compliance_evidences');
+        $this->addMediaCollection('evidences');
     }
 
     public function audit(): BelongsTo

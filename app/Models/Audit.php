@@ -15,18 +15,13 @@ class Audit extends Model
 
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'score_percentage' => 'decimal:2',
-        ];
-    }
+    protected $casts = [
+        'score_percentage' => 'decimal:2',
+    ];
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty();
+        return LogOptions::defaults()->logAll()->logOnlyDirty();
     }
 
     public function aiSystem(): BelongsTo
@@ -42,5 +37,10 @@ class Audit extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(AuditAnswer::class);
+    }
+
+    public function pqcSignatures()
+    {
+        return $this->morphMany(PqcSignature::class, 'signable');
     }
 }
