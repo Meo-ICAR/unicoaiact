@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,10 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class AiSystem extends Model
+class AiSystem extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     protected $guarded = [];
 
@@ -20,6 +24,11 @@ class AiSystem extends Model
         'is_shadow_ai' => 'boolean',
         'has_kill_switch' => 'boolean',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('disclaimers');
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -69,5 +78,10 @@ class AiSystem extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(AiIncident::class);
+    }
+
+    public function pqcSignatures()
+    {
+        return $this->morphMany(PqcSignature::class, 'signable');
     }
 }

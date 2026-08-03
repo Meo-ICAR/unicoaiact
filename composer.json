@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "^5.7",
         "filament/spatie-laravel-media-library-plugin": "^5.7",
         "laravel/framework": "^13.8",
@@ -21,6 +22,7 @@
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
+        "pestphp/pest": "^4.7",
         "phpunit/phpunit": "^12.5.12"
     },
     "autoload": {
