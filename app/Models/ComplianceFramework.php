@@ -14,6 +14,10 @@ class ComplianceFramework extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'compliance_threshold_percentage' => 'decimal:2',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logAll()->logOnlyDirty();

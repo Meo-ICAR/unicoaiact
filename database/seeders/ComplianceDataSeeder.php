@@ -9,15 +9,21 @@ use App\Models\AiModel;
 use App\Models\AiSystem;
 use App\Models\Audit;
 use App\Models\AuditAnswer;
+use App\Models\BiasTest;
 use App\Models\ComplianceFramework;
+use App\Models\EsgAiMetric;
 use App\Models\FrameworkRequirement;
+use App\Models\FriaAssessment;
 use App\Models\Organization;
+use App\Models\PqcSignature;
 use App\Models\RiskAssessment;
 use App\Models\User;
 use App\Services\AiComplianceCalculatorService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class ComplianceDataSeeder extends Seeder
 {
@@ -49,12 +55,13 @@ class ComplianceDataSeeder extends Seeder
                 ]
             );
 
-            // 2. Framework EU AI Act & Requisiti
+            // 2. Framework di Compliance & Requisiti
             $framework = ComplianceFramework::firstOrCreate(
                 ['code' => 'EU_AI_ACT_2024'],
                 [
                     'title' => 'EU Artificial Intelligence Act (Regolamento UE 2024/1689)',
                     'version' => '1.0',
+                    'compliance_threshold_percentage' => 80,
                 ]
             );
 
@@ -106,6 +113,8 @@ class ComplianceDataSeeder extends Seeder
                 ]
             );
 
+            $this->seedSecondaryFrameworks($organization, $owner);
+
             // 3. Modelli IA Utilizzati
             $modelGpt4o = AiModel::firstOrCreate(
                 ['name' => 'GPT-4o'],
@@ -152,9 +161,9 @@ class ComplianceDataSeeder extends Seeder
                 ]
             );
 
-            $calculator = new AiComplianceCalculatorService();
+            $calculator = new AiComplianceCalculatorService;
 
-            // 4. Definizione dei 5 Sistemi IA e relativi dati correlati
+            // 4. Definizione dei Sistemi IA e relativi dati correlati
 
             // SYSTEM 1: RAG Customer Support
             $system1 = AiSystem::create([
@@ -181,6 +190,15 @@ class ComplianceDataSeeder extends Seeder
                 'is_annex_iii' => false,
                 'evaluated_by' => $evaluator->id,
                 'completed_at' => now()->subDays(20),
+            ]);
+
+            $this->sealApproval($system1, $owner, 'Approvato dal Chief AI Governance Officer, condizioni di rilascio rispettate.', now()->subDays(19));
+
+            EsgAiMetric::create([
+                'ai_system_id' => $system1->id,
+                'estimated_kwh_consumption' => 420.50,
+                'carbon_footprint_kg' => 115.30,
+                'ethical_governance_score' => 92.00,
             ]);
 
             $audit1 = Audit::create([
@@ -211,6 +229,7 @@ class ComplianceDataSeeder extends Seeder
             ]);
 
             $calculator->calculate($audit1);
+            $this->sealAuditResult($audit1, now()->subDays(19));
 
             // SYSTEM 2: Predictive Credit Score Engine
             $system2 = AiSystem::create([
@@ -237,6 +256,25 @@ class ComplianceDataSeeder extends Seeder
                 'is_annex_iii' => true,
                 'evaluated_by' => $evaluator->id,
                 'completed_at' => now()->subDays(15),
+            ]);
+
+            $this->sealApproval($system2, $owner, 'Approvato subordinatamente alla FRIA e al piano di mitigazione bias.', now()->subDays(14));
+
+            BiasTest::create([
+                'ai_system_id' => $system2->id,
+                'test_name' => 'Q2 2026 Gender & Region Bias Test',
+                'fairness_score' => 96.50,
+                'drift_score' => 1.20,
+                'passed' => true,
+                'metrics_payload' => ['disparate_impact_ratio' => 0.98, 'sample_size' => 45000],
+                'tested_at' => now()->subDays(14),
+            ]);
+
+            EsgAiMetric::create([
+                'ai_system_id' => $system2->id,
+                'estimated_kwh_consumption' => 1250.00,
+                'carbon_footprint_kg' => 340.00,
+                'ethical_governance_score' => 78.50,
             ]);
 
             $audit2 = Audit::create([
@@ -267,6 +305,16 @@ class ComplianceDataSeeder extends Seeder
             ]);
 
             $calculator->calculate($audit2);
+            $this->sealAuditResult($audit2, now()->subDays(14));
+
+            FriaAssessment::create([
+                'ai_system_id' => $system2->id,
+                'affected_categories' => 'Persone fisiche e piccole imprese richiedenti credito.',
+                'fundamental_rights_impact' => 'Rischio di discriminazione algoritmica indiretta nell\'accesso al credito per categorie economicamente vulnerabili.',
+                'mitigation_measures' => 'Revisione umana obbligatoria per ogni rifiuto automatico, audit trimestrale del bias, canale di reclamo dedicato per il richiedente.',
+                'assessed_by' => $evaluator->id,
+                'completed_at' => now()->subDays(13),
+            ]);
 
             // Registro incidenti per Credit Engine
             AiIncident::create([
@@ -306,6 +354,16 @@ class ComplianceDataSeeder extends Seeder
                 'is_annex_iii' => true,
                 'evaluated_by' => $evaluator->id,
                 'completed_at' => now()->subDays(10),
+            ]);
+
+            BiasTest::create([
+                'ai_system_id' => $system3->id,
+                'test_name' => 'Screening CV Titoli Esteri — Test di Robustezza',
+                'fairness_score' => 71.00,
+                'drift_score' => 8.40,
+                'passed' => false,
+                'metrics_payload' => ['alert' => 'Falso negativo ricorrente su candidati con titoli di studio non standardizzati'],
+                'tested_at' => now()->subDays(9),
             ]);
 
             $audit3 = Audit::create([
@@ -443,6 +501,15 @@ class ComplianceDataSeeder extends Seeder
 
             $calculator->calculate($audit5);
 
+            FriaAssessment::create([
+                'ai_system_id' => $system5->id,
+                'affected_categories' => 'Dipendenti, visitatori e fornitori che accedono ai varchi controllati.',
+                'fundamental_rights_impact' => 'Trattamento di dati biometrici particolari; rischio di errori di riconoscimento e di sorveglianza sproporzionata.',
+                'mitigation_measures' => 'Crittografia dei vettori biometrici, conservazione minima dei dati, procedura di fallback su badge fisico, DPIA GDPR coordinata.',
+                'assessed_by' => $evaluator->id,
+                'completed_at' => now()->subDays(4),
+            ]);
+
             // Incidente per Biometric System
             AiIncident::create([
                 'ai_system_id' => $system5->id,
@@ -452,6 +519,163 @@ class ComplianceDataSeeder extends Seeder
                 'reported_to_authority' => false,
                 'reported_at' => now()->subDays(1),
             ]);
+
+            // SYSTEM 6: pratica di IA vietata (Art. 5) — dimostra il blocco di approvazione
+            // per i sistemi a rischio 'prohibited' introdotto in ApproveAndSealAction.
+            $system6 = AiSystem::create([
+                'organization_id' => $organization->id,
+                'name' => 'Real-Time Public Space Emotion Profiler (Rilevato)',
+                'description' => 'Prototipo rilevato dal team Legal che effettua categorizzazione biometrica in tempo reale in aree pubbliche per finalità di marketing predittivo.',
+                'version' => '0.3.0-prototype',
+                'owner_id' => $owner->id,
+                'is_shadow_ai' => true,
+                'discovery_method' => 'Segnalazione Ufficio Legale',
+                'approval_status' => 'pending_approval',
+                'human_oversight_type' => null,
+                'has_kill_switch' => false,
+                'eu_registration_status' => 'not_required',
+            ]);
+
+            RiskAssessment::create([
+                'ai_system_id' => $system6->id,
+                'risk_level' => 'prohibited',
+                'justification' => 'Rientra nelle pratiche vietate ex Art. 5 EU AI Act: categorizzazione biometrica in tempo reale in spazi pubblici accessibili senza base giuridica. Il sistema non può essere approvato né messo in produzione.',
+                'is_annex_iii' => false,
+                'evaluated_by' => $evaluator->id,
+                'completed_at' => now()->subDays(1),
+            ]);
         });
+    }
+
+    /**
+     * Framework aggiuntivi (ISO/IEC 42001, NIST AI RMF, GDPR) con soglie di conformità
+     * differenziate, per dimostrare compliance_threshold_percentage configurabile.
+     */
+    private function seedSecondaryFrameworks(Organization $organization, User $owner): void
+    {
+        $iso42001 = ComplianceFramework::firstOrCreate(
+            ['code' => 'ISO_IEC_42001_2023'],
+            [
+                'title' => 'ISO/IEC 42001:2023 - Artificial Intelligence Management System',
+                'version' => '2023',
+                'compliance_threshold_percentage' => 75,
+            ]
+        );
+
+        $isoReqs = [
+            ['section_code' => 'Control A.5', 'title' => 'Politiche per l\'IA', 'description' => 'Definizione di politiche aziendali formali sull\'uso responsabile e accettabile dei sistemi di Intelligenza Artificiale.', 'applicable_risk_levels' => ['minimal', 'limited', 'high', 'prohibited']],
+            ['section_code' => 'Control A.6', 'title' => 'Gestione dei Dati per Sistemi IA', 'description' => 'Tracciabilità della provenienza dei dati e tutela della privacy nei flussi di training/RAG.', 'applicable_risk_levels' => ['limited', 'high']],
+            ['section_code' => 'Control A.8', 'title' => 'Gestione dei Fornitori e Parti Terze (API)', 'description' => 'Valutazione della sicurezza, conformità e affidabilità dei fornitori esterni di modelli di IA.', 'applicable_risk_levels' => ['minimal', 'limited', 'high']],
+        ];
+
+        foreach ($isoReqs as $req) {
+            FrameworkRequirement::firstOrCreate(
+                ['compliance_framework_id' => $iso42001->id, 'section_code' => $req['section_code']],
+                ['title' => $req['title'], 'description' => $req['description'], 'applicable_risk_levels' => $req['applicable_risk_levels']]
+            );
+        }
+
+        $nist = ComplianceFramework::firstOrCreate(
+            ['code' => 'NIST_AI_RMF_1.0'],
+            [
+                'title' => 'NIST Artificial Intelligence Risk Management Framework',
+                'version' => '1.0',
+                'compliance_threshold_percentage' => 70,
+            ]
+        );
+
+        $nistReqs = [
+            ['section_code' => 'GOVERN', 'title' => 'Cultura e Governance dei Rischi IA', 'description' => 'Integrazione dei processi di risk management dell\'IA nelle strutture decisionali dell\'organizzazione.', 'applicable_risk_levels' => ['minimal', 'limited', 'high']],
+            ['section_code' => 'MAP', 'title' => 'Mappatura del Contesto e dei Rischi', 'description' => 'Comprensione del contesto applicativo e categorizzazione dei potenziali impatti negativi.', 'applicable_risk_levels' => ['minimal', 'limited', 'high']],
+            ['section_code' => 'MEASURE', 'title' => 'Misurazione e Valutazione delle Performance', 'description' => 'Analisi quantitativa e qualitativa di accuratezza, bias e affidabilità dell\'algoritmo.', 'applicable_risk_levels' => ['limited', 'high']],
+            ['section_code' => 'MANAGE', 'title' => 'Gestione e Mitigazione dei Rischi', 'description' => 'Allocazione delle risorse per la risposta e prioritizzazione dei rischi identificati.', 'applicable_risk_levels' => ['limited', 'high']],
+        ];
+
+        foreach ($nistReqs as $req) {
+            FrameworkRequirement::firstOrCreate(
+                ['compliance_framework_id' => $nist->id, 'section_code' => $req['section_code']],
+                ['title' => $req['title'], 'description' => $req['description'], 'applicable_risk_levels' => $req['applicable_risk_levels']]
+            );
+        }
+
+        $gdpr = ComplianceFramework::firstOrCreate(
+            ['code' => 'GDPR_2016_679'],
+            [
+                'title' => 'Regolamento Generale sulla Protezione dei Dati (GDPR)',
+                'version' => '2016/679',
+                'compliance_threshold_percentage' => 90,
+            ]
+        );
+
+        $gdprReqs = [
+            ['section_code' => 'Art. 6 & 9', 'title' => 'Basi Giuridiche e Dati Particolari', 'description' => 'Verifica della base giuridica appropriata per l\'uso dei dati dei clienti nei prompt dell\'IA.', 'applicable_risk_levels' => ['minimal', 'limited', 'high']],
+            ['section_code' => 'Art. 22', 'title' => 'Processo Decisionale Automatizzato e Profilazione', 'description' => 'Diritto dell\'interessato a non essere sottoposto ad una decisione basata unicamente sul trattamento automatizzato.', 'applicable_risk_levels' => ['high']],
+            ['section_code' => 'Art. 35', 'title' => 'Valutazione di Impatto sulla Protezione dei Dati (DPIA)', 'description' => 'Svolgimento obbligatorio della DPIA quando il trattamento con l\'IA prevede l\'uso sistematico di dati su larga scala.', 'applicable_risk_levels' => ['high']],
+        ];
+
+        foreach ($gdprReqs as $req) {
+            FrameworkRequirement::firstOrCreate(
+                ['compliance_framework_id' => $gdpr->id, 'section_code' => $req['section_code']],
+                ['title' => $req['title'], 'description' => $req['description'], 'applicable_risk_levels' => $req['applicable_risk_levels']]
+            );
+        }
+    }
+
+    /**
+     * Simula l'approvazione con sigillo WORM di un AiSystem, riusando lo stesso
+     * algoritmo (HMAC-SHA3-512) di App\Filament\Resources\AiSystems\Actions\ApproveAndSealAction,
+     * così i dati demo non dichiarano garanzie crittografiche diverse da quelle reali dell'app.
+     */
+    private function sealApproval(AiSystem $system, User $approver, string $notes, Carbon $sealedAt): void
+    {
+        $system->update(['approval_status' => 'approved']);
+
+        $payload = [
+            'ai_system_id' => $system->id,
+            'name' => $system->name,
+            'version' => $system->version,
+            'approved_by' => $approver->id,
+            'approved_at' => $sealedAt->toIso8601String(),
+            'notes' => $notes,
+        ];
+
+        $this->sealRecord(AiSystem::class, $system->id, $payload, $sealedAt);
+    }
+
+    private function sealAuditResult(Audit $audit, Carbon $sealedAt): void
+    {
+        $payload = [
+            'audit_id' => $audit->id,
+            'ai_system_id' => $audit->ai_system_id,
+            'compliance_framework_id' => $audit->compliance_framework_id,
+            'score_percentage' => (string) $audit->score_percentage,
+            'status' => $audit->status,
+            'sealed_at' => $sealedAt->toIso8601String(),
+        ];
+
+        $this->sealRecord(Audit::class, $audit->id, $payload, $sealedAt);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function sealRecord(string $signableType, int $signableId, array $payload, Carbon $sealedAt): void
+    {
+        $secretKey = config('services.pqc_worm.secret');
+
+        if (! is_string($secretKey) || $secretKey === '') {
+            throw new RuntimeException('PQC_WORM_SECRET_KEY non configurata: impossibile seminare i sigilli WORM di demo.');
+        }
+
+        $dataHash = hash('sha3-512', json_encode($payload, JSON_THROW_ON_ERROR));
+
+        PqcSignature::create([
+            'signable_type' => $signableType,
+            'signable_id' => $signableId,
+            'hash_algorithm' => 'HMAC-SHA3-512',
+            'data_hash' => $dataHash,
+            'pqc_signature' => base64_encode(hash_hmac('sha3-512', $dataHash, $secretKey)),
+            'sealed_at' => $sealedAt,
+        ]);
     }
 }

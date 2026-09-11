@@ -20,6 +20,10 @@ class ComplianceFrameworksTable
                     ->searchable(),
                 TextColumn::make('version')
                     ->searchable(),
+                TextColumn::make('compliance_threshold_percentage')
+                    ->label('Soglia (%)')
+                    ->suffix('%')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

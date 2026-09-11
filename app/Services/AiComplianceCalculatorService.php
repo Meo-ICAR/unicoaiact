@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Models\Audit;
 use App\Models\AuditAnswer;
-use Spatie\Activitylog\Models\Activity;
 
 class AiComplianceCalculatorService
 {
@@ -15,11 +14,10 @@ class AiComplianceCalculatorService
      */
     public function calculate(Audit $audit): Audit
     {
-        $audit->loadMissing(['aiSystem.riskAssessments', 'answers.requirement']);
+        $audit->loadMissing(['aiSystem.latestRiskAssessment', 'framework', 'answers.requirement']);
 
         // Recupera il livello di rischio del sistema IA tramite l'ultima valutazione del rischio
-        $latestRiskAssessment = $audit->aiSystem?->riskAssessments()->latest('id')->first();
-        $systemRiskLevel = $latestRiskAssessment?->risk_level;
+        $systemRiskLevel = $audit->aiSystem?->latestRiskAssessment?->risk_level;
 
         // Recupera tutte le risposte collegate all'audit
         $answers = $audit->answers;
@@ -27,14 +25,14 @@ class AiComplianceCalculatorService
         // Filtra le risposte applicabili al livello di rischio del sistema
         $applicableAnswers = $answers->filter(function (AuditAnswer $answer) use ($systemRiskLevel): bool {
             $requirement = $answer->requirement;
-            if (!$requirement) {
+            if (! $requirement) {
                 return false;
             }
 
             $applicableLevels = $requirement->applicable_risk_levels;
 
             // Se il requisito non specifica livelli o se non c'è una classificazione di rischio, è applicabile
-            if (empty($applicableLevels) || !$systemRiskLevel) {
+            if (empty($applicableLevels) || ! $systemRiskLevel) {
                 return true;
             }
 
@@ -50,8 +48,13 @@ class AiComplianceCalculatorService
             $scorePercentage = round(($compliantCount / $totalApplicable) * 100, 2);
         }
 
-        // Determina lo stato: se score < 80% imposta 'non_compliant', altrimenti 'compliant'
-        $status = $scorePercentage < 80.0 ? 'non_compliant' : 'compliant';
+        // Determina lo stato in base alla soglia di conformità configurata sul framework
+        // (fallback all'80% se il framework non ne specifica una)
+        $threshold = $audit->framework?->compliance_threshold_percentage !== null
+            ? (float) $audit->framework->compliance_threshold_percentage
+            : 80.0;
+
+        $status = $scorePercentage < $threshold ? 'non_compliant' : 'compliant';
 
         // Aggiorna il modello Audit
         $audit->update([
@@ -69,6 +72,7 @@ class AiComplianceCalculatorService
                 'total_applicable' => $totalApplicable,
                 'compliant_answers' => $applicableAnswers->where('is_compliant', true)->count(),
                 'system_risk_level' => $systemRiskLevel,
+                'threshold_percentage' => $threshold,
             ])
             ->log("Calcolata percentuale di conformità per Audit #{$audit->id}: {$scorePercentage}% - Stato: {$status}");
 

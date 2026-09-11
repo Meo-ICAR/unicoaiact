@@ -22,8 +22,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
         $this->call([
-            AiComplianceSeeder::class,
-            // ComplianceFrameworksSeeder::class,
+            ComplianceDataSeeder::class,
         ]);
     }
 }

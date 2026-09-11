@@ -28,10 +28,10 @@ class DownloadComplianceReportAction extends Action
             ->color('info')
             ->action(function (AiSystem $record): StreamedResponse {
                 // Carica le relazioni necessarie per la scheda di trasparenza
-                $record->loadMissing(['aiModels', 'riskAssessments', 'organization', 'owner', 'pqcSignatures']);
+                $record->loadMissing(['aiModels', 'latestRiskAssessment', 'organization', 'owner', 'pqcSignatures']);
 
                 // Recupera l'ultima valutazione del rischio
-                $latestRisk = $record->riskAssessments()->latest('id')->first();
+                $latestRisk = $record->latestRiskAssessment;
 
                 // Genera il PDF dal template Blade in formato A4
                 $pdf = Pdf::loadView('pdf.ai-compliance-report', [
@@ -44,7 +44,7 @@ class DownloadComplianceReportAction extends Action
                 $filename = "Compliance_Report_{$systemSlug}_{$dateSlug}.pdf";
 
                 return response()->streamDownload(
-                    fn () => print($pdf->output()),
+                    fn () => print ($pdf->output()),
                     $filename,
                     ['Content-Type' => 'application/pdf']
                 );

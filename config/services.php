@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'pqc_worm' => [
+        'secret' => env('PQC_WORM_SECRET_KEY'),
+    ],
+
 ];
