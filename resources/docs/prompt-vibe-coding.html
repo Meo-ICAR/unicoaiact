@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Vibe Coding — UnicoAIAct</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1c2230;
+    --border: #2a3142;
+    --text: #e6e9f0;
+    --text-dim: #9aa4b8;
+    --accent: #f0a828;
+    --accent-2: #4f8cff;
+    --danger: #ef5a5a;
+    --ok: #45c97a;
+    --code-bg: #10141c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav.toc {
+    width: 270px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); margin: 0 0 12px; }
+  nav.toc a { display: block; color: var(--text-dim); text-decoration: none; font-size: 13.5px; padding: 6px 8px; border-radius: 6px; margin-bottom: 2px; }
+  nav.toc a:hover { background: var(--panel-2); color: var(--text); }
+  main { flex: 1; padding: 40px 56px 96px; max-width: 900px; }
+  header.hero { margin-bottom: 40px; }
+  header.hero .badge {
+    display: inline-block; background: rgba(240,168,40,.12); color: var(--accent);
+    border: 1px solid rgba(240,168,40,.35); padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: 32px; margin: 0 0 10px; }
+  header.hero p.lead { color: var(--text-dim); font-size: 16px; max-width: 640px; }
+  section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin: 0 0 18px; }
+  h3 { font-size: 17px; color: var(--accent); margin: 24px 0 10px; }
+  p { color: #cfd5e2; }
+  ul, ol { color: #cfd5e2; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--panel);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .callout.danger { border-left-color: var(--danger); }
+  .callout.ok { border-left-color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  code { background: var(--code-bg); color: #ffcf7a; padding: 1px 6px; border-radius: 4px; font-size: .9em; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; color: #cfe3ff; }
+  .prompt-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .prompt-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; margin-bottom: 8px; }
+  .prompt-card.bad .label { color: var(--danger); }
+  .prompt-card.good .label { color: var(--ok); }
+  .badge-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .badge-list span { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; color: var(--text-dim); }
+  footer { color: var(--text-dim); font-size: 12.5px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 40px; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    nav.toc { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 24px 20px 64px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <h2>Indice</h2>
+    <a href="#intro">Come usare questo documento</a>
+    <a href="#prodotto">Cos'è UnicoAIAct</a>
+    <a href="#architettura">Architettura reale (dal codice)</a>
+    <a href="#regole">Regole di dominio non negoziabili</a>
+    <a href="#stack">Stack tecnico</a>
+    <a href="#convenzioni">Convenzioni di codice</a>
+    <a href="#testing">Testing</a>
+    <a href="#backlog">Backlog noto</a>
+    <a href="#template">Template di prompt pronti</a>
+  </nav>
+  <main>
+    <header class="hero">
+      <span class="badge">Prompt Guida · Vibe Coding</span>
+      <h1>Prompt Vibe Coding — UnicoAIAct</h1>
+      <p class="lead">Il contesto di dominio da incollare (o far leggere) a un assistente AI prima di chiedere una nuova funzionalità su questa applicazione. Completa — non sostituisce — le convenzioni tecniche Laravel/Filament/Boost già definite in <code>CLAUDE.md</code>.</p>
+    </header>
+
+    <section id="intro">
+      <h2>Come usare questo documento</h2>
+      <p>UnicoAIAct <strong>non è un CRUD qualunque</strong>: è un software di compliance legale. Ogni record scritto (audit, sigillo, incidente, valutazione di rischio) può finire davanti a un Organismo Notificato, all'AI Office o a un giudice.</p>
+      <div class="callout danger">
+        <strong>Regola generale:</strong> un prompt vago tipo "aggiungi una feature X" va sempre completato con <em>"e mantieni la tracciabilità/immodificabilità dei dati esistenti"</em>. Un modello lasciato libero tende a semplificare e a rompere silenziosamente le garanzie legali del sistema.
+      </div>
+      <p>Prima di scrivere codice con un assistente AI su questo repository:</p>
+      <ol>
+        <li>Fornisci all'assistente le sezioni <strong>"Regole di dominio non negoziabili"</strong> e <strong>"Architettura reale"</strong> di questo documento.</li>
+        <li>Descrivi la feature includendo esplicitamente i vincoli di tracciabilità/immutabilità che si applicano (vedi §Regole).</li>
+        <li>Chiedi sempre i test Pest per la logica di calcolo o per le azioni che scrivono sigilli/log.</li>
+        <li>Fai verificare a un umano ogni riferimento normativo (articoli, soglie, scadenze) prima del merge.</li>
+      </ol>
+    </section>
+
+    <section id="prodotto">
+      <h2>Cos'è UnicoAIAct (dal prodotto ufficiale)</h2>
+      <p>UnicoAIAct è un modulo della <strong>UNICO Suite</strong> che aiuta le organizzazioni ad adeguarsi al <strong>Regolamento Europeo sull'Intelligenza Artificiale (EU AI Act — Reg. UE 2024/1689)</strong>. Digitalizza l'inventario dei sistemi IA, automatizza la classificazione del rischio e supporta la governance dell'intelligenza artificiale, per organizzazioni private, pubbliche amministrazioni, system integrator e sviluppatori.</p>
+
+      <h3>I 5 pilastri descritti sul sito prodotto</h3>
+      <table>
+        <thead><tr><th>Pilastro</th><th>Cosa copre</th></tr></thead>
+        <tbody>
+          <tr><td>1. Inventario &amp; Classificazione del rischio</td><td>Mappa gli algoritmi interni e di terze parti (incluso lo "Shadow AI"), con categorizzazione guidata del rischio e alert immediati sulle pratiche IA vietate.</td></tr>
+          <tr><td>2. FRIA &amp; Data Governance</td><td>Conduce le Valutazioni d'Impatto sui Diritti Fondamentali e valida la qualità dei dataset di addestramento (bias, accuratezza).</td></tr>
+          <tr><td>3. Trasparenza &amp; Supervisione umana</td><td>Genera avvisi automatici agli utenti, gestisce i ruoli di supervisione umana, traccia i contenuti sintetici.</td></tr>
+          <tr><td>4. Bias Auditing &amp; Registrazione</td><td>Monitora il drift delle performance degli algoritmi, gestisce la registrazione nella banca dati UE per i sistemi ad alto rischio, traccia gli incidenti gravi.</td></tr>
+          <tr><td>5. Tracciabilità algoritmica</td><td>Usa crittografia (etichettata "post-quantistica" nel marketing) per sigillare i log decisionali e le versioni dei modelli.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="badge-list">
+        <span>IT Director / Chief AI Officer</span>
+        <span>Compliance &amp; Legal</span>
+        <span>Banking / Insurance / HR</span>
+        <span>Pubbliche Amministrazioni</span>
+        <span>Provider / Deployer di IA</span>
+      </div>
+      <p>Il prodotto si integra concettualmente con altri moduli UNICO Suite: <code>UnicoGDPR</code>, <code>UnicoCyber</code>, <code>UnicoESG</code>, <code>UnicoDORA</code>, <code>UnicoPQC</code>, <code>UnicoBPM</code>, <code>UnicoConsultant</code>.</p>
+    </section>
+
+    <section id="architettura">
+      <h2>Architettura reale (dal codice)</h2>
+      <p>Nel codice, i 5 pilastri di marketing sono riorganizzati in 4 pilastri normativi principali più un motore trasversale. Quando parli con un assistente AI, usa <em>questa</em> mappa, non quella di marketing, perché è quella che corrisponde a modelli, risorse Filament e migrazioni reali.</p>
+      <table>
+        <thead><tr><th>Pilastro</th><th>Modelli</th><th>Scopo normativo</th></tr></thead>
+        <tbody>
+          <tr><td>1. Classificazione del rischio</td><td><code>AiSystem</code>, <code>AiModel</code>, <code>RiskAssessment</code></td><td>Inventario dei sistemi IA (incluso "Shadow AI"), classificazione in <code>prohibited / high / limited / minimal</code>, verifica Allegato III.</td></tr>
+          <tr><td>2. Impatto sui diritti fondamentali</td><td><code>FriaAssessment</code></td><td>FRIA ex Art. 27, con eventuale collegamento a una DPIA GDPR esterna.</td></tr>
+          <tr><td>3. Supervisione umana</td><td>campi su <code>AiSystem</code> (<code>human_oversight_type</code>, <code>has_kill_switch</code>, <code>kill_switch_procedure</code>)</td><td>Human-in-the-loop / on-the-loop / in-command, kill switch.</td></tr>
+          <tr><td>4. Trasparenza, monitoraggio, registrazione</td><td><code>BiasTest</code>, <code>EsgAiMetric</code>, <code>AiIncident</code>, registrazione banca dati UE su <code>AiSystem</code></td><td>Bias/drift testing, impatto ambientale, incident reporting all'autorità.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Motore trasversale</h3>
+      <ul>
+        <li><strong><code>ComplianceFramework</code> / <code>FrameworkRequirement</code> / <code>Audit</code> / <code>AuditAnswer</code></strong> — motore di audit generico, non limitato all'AI Act (può ospitare ISO 42001, NIST AI RMF, GDPR...). <code>AiComplianceCalculatorService</code> calcola la percentuale di conformità di un <code>Audit</code> filtrando i requisiti applicabili al livello di rischio del sistema.</li>
+        <li><strong><code>PqcSignature</code></strong> — sigillo di integrità <strong>WORM</strong> (Write-Once-Read-Many) apposto sui record approvati (oggi: <code>AiSystem</code>, via <code>ApproveAndSealAction</code>), per garantire che un'approvazione di compliance non sia alterabile a posteriori.</li>
+        <li><strong><code>Organization</code></strong> — tenant nominale (azienda, ente pubblico, agenzia di consulenza). Lo stato reale dell'isolamento multi-tenant è un gap aperto, vedi §Backlog.</li>
+        <li><strong>Spatie Activitylog</strong> su (quasi) tutti i modelli — il registro delle attività, cioè la prova storica di chi ha fatto cosa e quando. Non va mai bypassato per le operazioni che cambiano lo stato di conformità.</li>
+      </ul>
+
+      <h3>Flusso operativo tipico nel pannello Filament (<code>/admin</code>)</h3>
+      <ol>
+        <li>Si censisce un <strong>Sistema IA</strong> (<code>AiSystem</code>), inclusi i modelli collegati (<code>AiModel</code>) e i dati di supervisione umana.</li>
+        <li>Si registra una o più <strong>Valutazioni del Rischio</strong> (<code>RiskAssessment</code>); l'ultima determina il <code>latestRiskAssessment</code> del sistema.</li>
+        <li>Se il sistema è ad alto rischio o tratta dati sensibili, si compila una <strong>FRIA</strong> (<code>FriaAssessment</code>).</li>
+        <li>Si eseguono eventuali <strong>Bias Test</strong> e si registrano le <strong>Metriche ESG</strong> collegate.</li>
+        <li>Si esegue un <strong>Audit</strong> su un <code>ComplianceFramework</code> (es. AI Act, ISO 42001): il punteggio è calcolato da <code>AiComplianceCalculatorService</code>, mai editabile a mano.</li>
+        <li>Quando il sistema è pronto, un Compliance Officer usa l'azione <strong>"Approva e Sigilla WORM"</strong> (<code>ApproveAndSealAction</code>): aggiorna lo stato, crea un <code>PqcSignature</code> (HMAC-SHA3-512) e registra l'attività, tutto dentro una <code>DB::transaction()</code>.</li>
+        <li>Eventuali problemi post-produzione si registrano come <strong>Incidenti</strong> (<code>AiIncident</code>).</li>
+      </ol>
+    </section>
+
+    <section id="regole">
+      <h2>Regole di dominio non negoziabili</h2>
+      <p>Includi sempre questi vincoli nel prompt (o verificali in review): un modello lasciato libero tende a ignorarli per semplicità.</p>
+
+      <h3>1. Non inventare riferimenti normativi</h3>
+      <p>Articoli dell'AI Act, soglie, scadenze, obblighi devono venire da una fonte verificata (testo del regolamento, documentazione ufficiale), mai generati "a memoria" da un LLM e scritti come se fossero certi. Se il codice o l'interfaccia cita un articolo (es. "Art. 50"), deve essere verificabile da un umano prima del merge.</p>
+
+      <h3>2. Terminologia crittografica accurata</h3>
+      <p>Non chiamare "post-quantistico" (PQC) un meccanismo che non lo è. Il sigillo WORM attuale è un <strong>HMAC-SHA3-512</strong> con chiave simmetrica (integrità + autenticazione, <em>non</em> firma a chiave pubblica né resistenza quantistica reale). Una vera firma PQC (es. ML-DSA/Dilithium, ML-KEM/Kyber) andrebbe implementata con una libreria dedicata, riflettendo l'algoritmo reale nel campo <code>hash_algorithm</code>. Non lasciare che un'etichetta UI sovra-dichiari le garanzie di sicurezza: è materiale contestabile da un auditor esterno.</p>
+
+      <h3>3. Nessun segreto nel codice sorgente</h3>
+      <p>Chiavi di firma, secret HMAC, credenziali: sempre <code>env()</code>/<code>config()</code>, mai stringhe letterali. Pattern di riferimento: <code>PQC_WORM_SECRET_KEY</code> → config dedicata, validazione esplicita se mancante, errore <em>prima</em> di mutare qualunque stato.</p>
+
+      <h3>4. Consistenza transazionale su sigillo/approvazione</h3>
+      <p>Un record non deve mai risultare "approvato" senza il relativo sigillo, né "sigillato" senza il corrispondente log di attività. Le azioni che toccano più tabelle correlate (stato + sigillo + log) vanno avvolte in <code>DB::transaction()</code>.</p>
+
+      <h3>5. Audit trail sempre presente</h3>
+      <p>Ogni mutazione rilevante per la compliance (creazione/modifica di <code>AiSystem</code>, <code>RiskAssessment</code>, <code>Audit</code>, <code>AiIncident</code>, sigilli) deve passare da <code>LogsActivity</code> o da una chiamata esplicita ad <code>activity()</code>. Non usare <code>->withoutLogging()</code> su percorsi di dominio se non per import/seeding esplicitamente marcato come tale.</p>
+
+      <h3>6. Immutabilità del WORM</h3>
+      <p>Una volta creato, un <code>PqcSignature</code> non va mai aggiornato né cancellato da codice applicativo. Per invalidare un sigillo si crea un nuovo evento (es. "revoca"), non si modifica quello esistente.</p>
+
+      <h3>7. I punteggi di conformità sono calcolati, non editabili a mano</h3>
+      <p><code>score_percentage</code> e <code>status</code> su <code>Audit</code> sono derivati da <code>AiComplianceCalculatorService::calculate()</code>. Non aggiungere campi form che permettano di scriverli direttamente: romperebbe la tracciabilità del calcolo.</p>
+
+      <div class="callout danger">
+        <strong>Sicurezza — stato attuale, da verificare prima di ogni feature:</strong>
+        <ul>
+          <li>Non esiste ancora un meccanismo di <strong>verifica</strong> del sigillo WORM (nessun ricalcolo/confronto dell'HMAC).</li>
+          <li><strong>Isolamento multi-tenant assente</strong>: <code>User</code> non è legato a <code>Organization</code>, non esistono Policy Laravel/Filament, nessuna risorsa applica scope per organizzazione. Qualsiasi utente autenticato sul pannello vede e può modificare i dati di tutte le organizzazioni.</li>
+          <li>Prima di aggiungere export, API pubbliche o report condivisibili via link, verificare che non si stia bypassando l'autenticazione del pannello o lo scoping per organizzazione (quando verrà introdotto).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="stack">
+      <h2>Stack tecnico</h2>
+      <p>Verifica sempre le versioni reali con <code>composer show --direct</code> prima di assumere un'API.</p>
+      <div class="badge-list">
+        <span>Laravel 13 · PHP 8.4</span>
+        <span>Filament v5 (pannello su /admin)</span>
+        <span>Pest v4</span>
+        <span>spatie/laravel-activitylog v5</span>
+        <span>spatie/laravel-medialibrary v11</span>
+        <span>barryvdh/laravel-dompdf (Kit Compliance PDF)</span>
+      </div>
+      <p>Le linee guida Laravel Boost (<code>CLAUDE.md</code>) restano vincolanti: usare i comandi Artisan/Filament per generare file, non assumere API di versioni diverse da quelle installate, <code>search-docs</code> prima di codice che dipende da comportamenti versione-specifici.</p>
+    </section>
+
+    <section id="convenzioni">
+      <h2>Convenzioni di codice specifiche del progetto</h2>
+      <ul>
+        <li>Testi UI, label, messaggi di log e nomi di variabili di dominio sono in <strong>italiano</strong>; nomi di classi/metodi/colonne restano in inglese. Non mischiare le due cose nello stesso livello.</li>
+        <li>Le Filament Action complesse (es. <code>ApproveAndSealAction</code>, <code>DownloadComplianceReportAction</code>) vivono in <code>app/Filament/Resources/&lt;Resource&gt;/Actions/</code> come classi dedicate che estendono <code>Filament\Actions\Action</code>, non come closure inline nella Resource.</li>
+        <li>I servizi di dominio (calcoli, orchestrazione multi-modello) vivono in <code>app/Services/</code> come classi invocabili, non come trait sui modelli.</li>
+        <li>Ogni modello di dominio usa <code>protected $guarded = []</code> + cast espliciti + <code>LogsActivity</code> con <code>LogOptions::defaults()->logAll()->logOnlyDirty()</code>: è lo standard del progetto.</li>
+      </ul>
+    </section>
+
+    <section id="testing">
+      <h2>Testing</h2>
+      <p>Framework: Pest. Anche in stile "vibe coding" i test <em>non sono opzionali</em>, in particolare per:</p>
+      <ul>
+        <li>logica di calcolo (<code>AiComplianceCalculatorService</code>);</li>
+        <li>azioni che scrivono sigilli/log (<code>ApproveAndSealAction</code> e simili);</li>
+        <li>qualunque validazione su stati non ammessi (es. impedire l'approvazione di un sistema <code>prohibited</code>).</li>
+      </ul>
+      <p>Quando si aggiunge una condizione di errore (es. "configurazione mancante"), aggiungere sempre il test del percorso infelice, non solo del percorso felice. <code>php artisan test --compact</code> per la suite completa; filtro su singolo file/<code>--filter</code> durante lo sviluppo.</p>
+    </section>
+
+    <section id="backlog">
+      <h2>Backlog noto</h2>
+      <p>Gap identificati da affrontare <strong>con l'utente</strong>, non a sorpresa, in ordine di impatto:</p>
+      <ol>
+        <li><strong>Isolamento multi-tenant e autorizzazione</strong> — nessuna Policy, nessuno scope per organizzazione. Blocca un uso multi-cliente sicuro.</li>
+        <li><strong>Verifica del sigillo WORM</strong> — oggi si può solo creare un sigillo, non verificarlo. Serve un'azione "Verifica integrità" che ricalcoli l'HMAC.</li>
+        <li><strong>Rotazione della chiave PQC</strong> — nessuna strategia per ruotare <code>PQC_WORM_SECRET_KEY</code> senza invalidare i sigilli storici.</li>
+      </ol>
+    </section>
+
+    <section id="template">
+      <h2>Template di prompt pronti all'uso</h2>
+      <div class="prompt-card bad">
+        <div class="label">✗ Prompt vago (da evitare)</div>
+        <p>"Aggiungi un pulsante per duplicare un Sistema IA."</p>
+      </div>
+      <div class="prompt-card good">
+        <div class="label">✓ Prompt completo (da usare)</div>
+        <p>"Aggiungi un'azione Filament per duplicare un <code>AiSystem</code>. La copia deve <strong>ripartire da zero</strong> su approvazione e sigillo: <code>approval_status</code> torna a <code>draft</code>/<code>pending_approval</code>, non copiare alcun <code>PqcSignature</code> collegato, e registra un evento di attività esplicito ("Sistema IA duplicato da X, sorgente #ID") sul nuovo record. Segui il pattern delle Action in <code>app/Filament/Resources/AiSystems/Actions/</code>. Aggiungi un test Pest che verifica che il duplicato non erediti sigilli né stato approvato."</p>
+      </div>
+
+      <div class="prompt-card bad">
+        <div class="label">✗ Prompt vago (da evitare)</div>
+        <p>"Mostra la percentuale di conformità nella lista degli Audit."</p>
+      </div>
+      <div class="prompt-card good">
+        <div class="label">✓ Prompt completo (da usare)</div>
+        <p>"Aggiungi una colonna <code>score_percentage</code> alla tabella <code>AuditsTable</code>, leggendo il valore già calcolato da <code>AiComplianceCalculatorService</code> e salvato sul record — <strong>non</strong> ricalcolarlo nella vista e <strong>non</strong> renderlo editabile dalla tabella. Colora la cella in base a <code>status</code> (verde ≥ soglia, rosso sotto)."</p>
+      </div>
+
+      <pre><code>Contesto: UnicoAIAct è un registro di conformità EU AI Act (Reg. UE 2024/1689).
+Vincoli non negoziabili per questa richiesta:
+- non inventare riferimenti normativi non verificati
+- non alterare/cancellare PqcSignature esistenti
+- avvolgi in DB::transaction() ogni scrittura multi-tabella su stato+sigillo+log
+- registra sempre l'attività con LogsActivity/activity()
+- aggiungi test Pest per il percorso felice E per il percorso infelice
+
+Richiesta: &lt;descrivi qui la feature&gt;</code></pre>
+    </section>
+
+    <footer>
+      Documento generato per l'uso interno del team UnicoAIAct come guida di dominio per il "vibe coding" con assistenti AI. Fonti: pagina prodotto ufficiale UnicoAIAct e <code>VIBE_CODING_SPEC.md</code> del repository.
+    </footer>
+  </main>
+</div>
+</body>
+</html>
