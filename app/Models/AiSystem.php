@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\MediaLibrary\HasMedia;
@@ -53,6 +54,15 @@ class AiSystem extends Model implements HasMedia
     public function riskAssessments(): HasMany
     {
         return $this->hasMany(RiskAssessment::class);
+    }
+
+    /**
+     * L'ultima valutazione del rischio registrata per questo sistema IA,
+     * usata per determinare i requisiti applicabili e il livello di rischio corrente.
+     */
+    public function latestRiskAssessment(): HasOne
+    {
+        return $this->hasOne(RiskAssessment::class)->latestOfMany();
     }
 
     public function audits(): HasMany
